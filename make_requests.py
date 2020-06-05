@@ -1,26 +1,32 @@
 import csv
 import json
 import os
-import pdb
 
 import requests
 
 REQUEST_URL = os.environ["REQUEST_URL"]
+DATA_DIR = "data"
 
 
 def make_requests(schema_filepath, data_filepath):
     columns = get_columns(schema_filepath)
 
     with open(data_filepath) as data_file:
+        # for line in data_file
         row_string = data_file.readline().strip("\n")
 
         while row_string:
             row = get_json_row(row_string, columns)
 
-            resp = requests.post(REQUEST_URL, data=row)
-            # log responses
-            print(resp)
+            for attempt in range(10):
+                resp = requests.post(REQUEST_URL, data=row)
+                # log responses
+                print(resp)
 
+                if resp.status_code == 201:
+                    break
+            
+            # remove this
             row_string = data_file.readline().strip("\n")
 
 
@@ -71,9 +77,12 @@ def format_value(value, column_datatype):
 
 
 if __name__ == "__main__":
-    data_files = os.listdir("data")
+    # TODO: handle case when data file has no matching schema file
+    # get absolute path instead of assuming relative
+    data_files = os.listdir(DATA_DIR)
 
     for data_file in data_files:
+        # os.path.join
         data_filepath = "data/" + data_file
         schema_filepath = "schemas/" + data_file[:-3] + "csv"
 
