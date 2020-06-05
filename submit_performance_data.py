@@ -1,9 +1,9 @@
 import csv
 import json
 import os
+import pathlib
 
 import requests
-import pathlib
 
 
 REQUEST_URL = os.environ["REQUEST_URL"]
@@ -49,7 +49,7 @@ def get_json_row(row_string, columns):
     for column in columns:
         column_name, column_width, column_datatype = column
 
-        # TODO: handle cases when row value does not fit column width 
+        # TODO: handle cases when row value does not fit column width
         value_end = value_start + int(column_width)
         value = row_string[value_start:value_end].strip()
 
@@ -69,7 +69,7 @@ def format_value(value, column_datatype):
 
     if column_datatype == "BOOLEAN":
         return value == "1"
-    
+
     # TODO: handle other datatypes
 
 
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     data_files = os.listdir(os.path.join(CURRENT_FILE, DATA_DIR))
 
     for data_file in data_files:
-        schema_file = data_file.split('.')[0] + ".csv"
+        schema_file = data_file.split(".")[0] + ".csv"
 
         data_filepath = os.path.join(CURRENT_FILE, DATA_DIR, data_file)
         schema_filepath = os.path.join(CURRENT_FILE, SCHEMAS_DIR, schema_file)
