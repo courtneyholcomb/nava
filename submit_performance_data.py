@@ -20,10 +20,12 @@ def submit_performance_data(schema_filepath, data_filepath):
         for line in data_file:
             row_string = line.strip("\n")
 
-            row = get_json_row(row_string, columns)
+            row = get_row(row_string, columns)
+            json_row = json.dumps(row)
+            row_id = row["measure_id"]
 
             for attempt in range(MAX_RETRIES):
-                resp = requests.post(REQUEST_URL, data=row)
+                resp = requests.post(REQUEST_URL, data=json_row)
                 # Log responses
                 print(resp)
 
@@ -31,6 +33,14 @@ def submit_performance_data(schema_filepath, data_filepath):
                 if resp.status_code == 201:
                     break
 
+                elif resp.status_code == 409:
+                    # delete existing row
+                    resp = requests.delete(REQUEST_URL + "?measure_id=" + row_id)
+                    # Log responses
+                    print(resp)
+
+                    # if resp code is 400:
+                    
             # TODO: log failure if failed after max retries
 
 
@@ -42,7 +52,7 @@ def get_columns(schema_filepath):
         return columns
 
 
-def get_json_row(row_string, columns):
+def get_row(row_string, columns):
     row = {}
     value_start = 0
 
@@ -57,7 +67,7 @@ def get_json_row(row_string, columns):
 
         value_start = value_end
 
-    return json.dumps(row)
+    return row
 
 
 def format_value(value, column_datatype):
@@ -75,10 +85,24 @@ def format_value(value, column_datatype):
 
 if __name__ == "__main__":
     # TODO: handle case when data file has no matching schema file
-    data_files = os.listdir(os.path.join(CURRENT_FILE, DATA_DIR))
+    data_files_unordered = os.listdir(os.path.join(CURRENT_FILE, DATA_DIR))
 
-    for data_file in data_files:
-        schema_file = data_file.split(".")[0] + ".csv"
+    # TODO today: put this into a helper function
+
+    data_files_dates = []
+    for data_file in data_files_unordered:
+        if data_file != ".DS_Store":
+            data_file_pieces = data_file.split("_")
+            data_file_prefix = data_file_pieces[0]
+            file_date = data_file_pieces[1].split(".")[0]
+            data_files_dates.append((file_date, data_file_prefix, data_file))
+    
+    data_files_dates.sort()
+
+    for data_file_pieces in data_files_dates:
+        file_date, data_file_prefix, data_file = data_file_pieces
+
+        schema_file = data_file_prefix + ".csv"
 
         data_filepath = os.path.join(CURRENT_FILE, DATA_DIR, data_file)
         schema_filepath = os.path.join(CURRENT_FILE, SCHEMAS_DIR, schema_file)

@@ -1,6 +1,6 @@
 To run server:
 
-1. Create a virtual environtment:
+1. Create a virtual environment:
 `python3 -mvenv env`
 
 2. Install dependencies:
